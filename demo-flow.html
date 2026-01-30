@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpinLove Demo - Kompletter Flow</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        min-height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 20px;
+        color: white;
+      }
+      
+      .widget-container {
+        width: 100%;
+        max-width: 420px;
+      }
+      
+      /* ========== HEADER ========== */
+      .header {
+        text-align: center;
+        margin-bottom: 20px;
+      }
+      
+      .header-logo {
+        font-size: 48px;
+        margin-bottom: 10px;
+      }
+      
+      .header-title {
+        font-size: 24px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #e91e63, #9c27b0);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      
+      .welcome-user {
+        font-size: 14px;
+        color: rgba(255,255,255,0.7);
+        margin-top: 5px;
+      }
+      
+      /* ========== DEMO CONTROLS ========== */
+      .demo-controls {
+        background: rgba(255,193,7,0.2);
+        border: 1px solid rgba(255,193,7,0.4);
+        border-radius: 12px;
+        padding: 15px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      
+      .demo-controls h3 {
+        color: #ffc107;
+        font-size: 14px;
+        margin-bottom: 10px;
+      }
+      
+      .demo-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      
+      .demo-btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      
+      .demo-btn:hover {
+        background: rgba(255,255,255,0.3);
+      }
+      
+      .demo-btn.active {
+        background: #e91e63;
+      }
+      
+      /* ========== FREE SPINS BADGE ========== */
+      .free-spins-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(10px);
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 14px;
+        margin-bottom: 20px;
+      }
+      
+      .free-spins-count {
+        font-weight: 700;
+        color: #ffd700;
+      }
+      
+      /* ========== REGISTRATION FORM ========== */
+      .registration-card {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 30px;
+        border: 1px solid rgba(255,255,255,0.2);
+      }
+      
+      .registration-title {
+        font-size: 20px;
+        font-weight: 600;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      
+      .form-group {
+        margin-bottom: 16px;
+      }
+      
+      .form-label {
+        display: block;
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        margin-bottom: 6px;
+      }
+      
+      .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 12px;
+        background: rgba(255,255,255,0.1);
+        color: white;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+      
+      .form-input:focus {
+        outline: none;
+        border-color: #e91e63;
+        background: rgba(255,255,255,0.15);
+      }
+      
+      .form-input::placeholder {
+        color: rgba(255,255,255,0.4);
+      }
+      
+      .checkbox-group {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin: 20px 0;
+      }
+      
+      .checkbox-input {
+        width: 20px;
+        height: 20px;
+        min-width: 20px;
+        margin-top: 2px;
+        cursor: pointer;
+        accent-color: #e91e63;
+      }
+      
+      .checkbox-label {
+        font-size: 12px;
+        line-height: 1.5;
+        color: rgba(255,255,255,0.7);
+      }
+      
+      .checkbox-label a {
+        color: #e91e63;
+        text-decoration: none;
+      }
+      
+      .checkbox-label a:hover {
+        text-decoration: underline;
+      }
+      
+      .submit-btn {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #e91e63 0%, #9c27b0 100%);
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      
+      .submit-btn.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      
+      .submit-btn.active:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(233, 30, 99, 0.4);
+      }
+      
+      /* ========== SUCCESS MESSAGE ========== */
+      .success-card {
+        background: rgba(76, 175, 80, 0.2);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 40px 30px;
+        border: 1px solid rgba(76, 175, 80, 0.3);
+        text-align: center;
+      }
+      
+      .success-icon {
+        font-size: 64px;
+        margin-bottom: 20px;
+      }
+      
+      .success-title {
+        font-size: 22px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      
+      .success-text {
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+        line-height: 1.6;
+      }
+      
+      /* ========== SLOT MACHINE ========== */
+      .slot-machine {
+        background: rgba(255,255,255,0.1);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        padding: 20px;
+        border: 1px solid rgba(255,255,255,0.2);
+        margin-bottom: 20px;
+      }
+      
+      .current-spin-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.5);
+        text-align: center;
+        margin-bottom: 15px;
+      }
+      
+      .result-category {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        border-left: 4px solid;
+        transition: all 0.3s ease;
+      }
+      
+      .result-category:last-child {
+        margin-bottom: 0;
+      }
+      
+      .result-category.food { border-left-color: #FF9500; }
+      .result-category.movie { border-left-color: #AF52DE; }
+      .result-category.together { border-left-color: #FF2D55; }
+      .result-category.intimacy { border-left-color: #FF006E; }
+      .result-category.world { border-left-color: #00CED1; }
+      
+      .category-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      
+      .category-icon {
+        font-size: 20px;
+      }
+      
+      .category-name {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.6);
+      }
+      
+      .category-result {
+        font-size: 18px;
+        font-weight: 600;
+      }
+      
+      .category-emotion {
+        font-size: 12px;
+        color: rgba(255,255,255,0.5);
+        margin-top: 4px;
+      }
+      
+      .world-description {
+        font-size: 13px;
+        color: rgba(255,255,255,0.7);
+        margin-top: 8px;
+        line-height: 1.5;
+      }
+      
+      /* ========== HISTORY ========== */
+      .history-section {
+        margin-top: 20px;
+      }
+      
+      .history-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+      
+      .history-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: rgba(255,255,255,0.9);
+      }
+      
+      .history-list {
+        max-height: 400px;
+        overflow-y: auto;
+        padding-right: 5px;
+      }
+      
+      .history-list::-webkit-scrollbar {
+        width: 4px;
+      }
+      
+      .history-list::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+      }
+      
+      .history-list::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.3);
+        border-radius: 2px;
+      }
+      
+      .history-item {
+        background: rgba(255,255,255,0.05);
+        border-radius: 12px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+      }
+      
+      .history-item:hover {
+        background: rgba(255,255,255,0.08);
+      }
+      
+      .history-item-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        cursor: pointer;
+      }
+      
+      .history-date {
+        font-size: 13px;
+        color: rgba(255,255,255,0.6);
+      }
+      
+      .history-preview {
+        display: flex;
+        gap: 6px;
+      }
+      
+      .history-preview-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      
+      .history-preview-dot.food { background: #FF9500; }
+      .history-preview-dot.movie { background: #AF52DE; }
+      .history-preview-dot.together { background: #FF2D55; }
+      .history-preview-dot.intimacy { background: #FF006E; }
+      
+      .history-expand-icon {
+        font-size: 12px;
+        color: rgba(255,255,255,0.4);
+        transition: transform 0.3s ease;
+      }
+      
+      .history-item.expanded .history-expand-icon {
+        transform: rotate(180deg);
+      }
+      
+      .history-item-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease;
+      }
+      
+      .history-item.expanded .history-item-content {
+        max-height: 300px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+      }
+      
+      .history-item-inner {
+        padding: 16px;
+      }
+      
+      .history-result {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+      
+      .history-result:last-child {
+        border-bottom: none;
+      }
+      
+      .history-result-icon {
+        font-size: 16px;
+      }
+      
+      .history-result-text {
+        font-size: 14px;
+        color: rgba(255,255,255,0.8);
+      }
+      
+      .empty-history {
+        text-align: center;
+        padding: 40px 20px;
+        color: rgba(255,255,255,0.5);
+      }
+      
+      .empty-history-icon {
+        font-size: 48px;
+        margin-bottom: 15px;
+        opacity: 0.5;
+      }
+      
+      .empty-history-text {
+        font-size: 14px;
+      }
+      
+      /* ========== ANIMATIONS ========== */
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      
+      .fade-in {
+        animation: fadeIn 0.4s ease forwards;
+      }
+      
+      .fade-in-delay-1 { animation-delay: 0.1s; opacity: 0; }
+      .fade-in-delay-2 { animation-delay: 0.2s; opacity: 0; }
+      .fade-in-delay-3 { animation-delay: 0.3s; opacity: 0; }
+      .fade-in-delay-4 { animation-delay: 0.4s; opacity: 0; }
+      
+      /* ========== HIDDEN ========== */
+      .hidden {
+        display: none !important;
+      }
+    </style>
+</head>
+<body>
+    <div class="widget-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="header-logo">🎰💕</div>
+            <div class="header-title">SpinLove</div>
+            <div class="welcome-user hidden" id="welcomeUser"></div>
+        </div>
+        
+        <!-- Demo Controls -->
+        <div class="demo-controls">
+            <h3>🧪 Demo: Verschiedene Zustände testen</h3>
+            <div class="demo-buttons">
+                <button class="demo-btn active" onclick="showState('freeSpins')">Free Spins (3)</button>
+                <button class="demo-btn" onclick="showState('freeSpins2')">Free Spins (1)</button>
+                <button class="demo-btn" onclick="showState('registration')">Registrierung</button>
+                <button class="demo-btn" onclick="showState('success')">Email gesendet</button>
+                <button class="demo-btn" onclick="showState('loggedIn')">Eingeloggt + History</button>
+            </div>
+        </div>
+        
+        <!-- Free Spins Badge -->
+        <div style="text-align: center;">
+            <div class="free-spins-badge" id="freeSpinsBadge">
+                <span class="free-spins-count" id="freeSpinsCount">3</span>
+                <span>Gratis-Spins übrig</span>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div id="contentArea">
+            <!-- Initial: Slot Machine with Results -->
+            <div class="slot-machine fade-in" id="slotMachine">
+                <div class="current-spin-label">Aktueller Spin</div>
+                
+                <div class="result-category food fade-in fade-in-delay-1">
+                    <div class="category-header">
+                        <span class="category-icon">🍽️</span>
+                        <span class="category-name">Essen & Trinken</span>
+                    </div>
+                    <div class="category-result">Candle-Light Dinner</div>
+                    <div class="category-emotion">romantisch & intim</div>
+                </div>
+                
+                <div class="result-category movie fade-in fade-in-delay-2">
+                    <div class="category-header">
+                        <span class="category-icon">🎬</span>
+                        <span class="category-name">Film & Serie</span>
+                    </div>
+                    <div class="category-result">Rom-Com Marathon</div>
+                    <div class="category-emotion">heiter & verspielt</div>
+                </div>
+                
+                <div class="result-category together fade-in fade-in-delay-3">
+                    <div class="category-header">
+                        <span class="category-icon">✨</span>
+                        <span class="category-name">Gemeinsame Aktivität</span>
+                    </div>
+                    <div class="category-result">Couple Massage</div>
+                    <div class="category-emotion">entspannend & wohltuend</div>
+                </div>
+                
+                <div class="result-category intimacy fade-in fade-in-delay-4">
+                    <div class="category-header">
+                        <span class="category-icon">💕</span>
+                        <span class="category-name">Intimität</span>
+                    </div>
+                    <div class="category-result">Liebesbrief schreiben</div>
+                    <div class="category-emotion">zärtlich & emotional</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Registration Form (hidden initially) -->
+        <div class="registration-card hidden" id="registrationForm">
+            <div class="registration-title">🎰 Unbegrenzte Spins freischalten</div>
+            
+            <div class="form-group">
+                <label class="form-label">Vorname</label>
+                <input type="text" class="form-input" id="firstName" placeholder="Vorname">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label">E-Mail</label>
+                <input type="email" class="form-input" id="email" placeholder="E-Mail">
+            </div>
+            
+            <div class="checkbox-group">
+                <input type="checkbox" class="checkbox-input" id="consent" onchange="updateSubmitButton()">
+                <label class="checkbox-label" for="consent">
+                    Ich stimme zu, dass mein Vorname und meine E-Mail-Adresse gespeichert werden, um Zugang zur App zu erhalten. Ich erhalte außerdem Tipps für unvergessliche Date-Nights und gelegentlich Infos zu weiteren Angeboten von ALL ABOUT VIDEO GmbH. Abmeldung jederzeit möglich.
+                    <br><br>
+                    <a href="#" onclick="alert('Datenschutzerklärung öffnet sich in echtem Produkt')">→ Datenschutzerklärung</a>
+                </label>
+            </div>
+            
+            <button type="button" class="submit-btn" id="submitBtn" onclick="simulateRegistration()">
+                Magic Link anfordern
+            </button>
+        </div>
+        
+        <!-- Success Message (hidden initially) -->
+        <div class="success-card hidden" id="successCard">
+            <div class="success-icon">✉️</div>
+            <div class="success-title">Prüfe dein Postfach! 📬</div>
+            <div class="success-text">Wir haben dir einen Magic Link geschickt. Klicke darauf, um unbegrenzte Spins freizuschalten!</div>
+        </div>
+        
+        <!-- History Section (hidden initially) -->
+        <div class="history-section hidden" id="historySection">
+            <div class="history-header">
+                <span class="history-title">📜 Deine Date-Night Historie</span>
+            </div>
+            <div class="history-list">
+                <div class="history-item" onclick="toggleHistoryItem(this)">
+                    <div class="history-item-header">
+                        <span class="history-date">Heute, 14:32</span>
+                        <div class="history-preview">
+                            <span class="history-preview-dot food"></span>
+                            <span class="history-preview-dot movie"></span>
+                            <span class="history-preview-dot together"></span>
+                            <span class="history-preview-dot intimacy"></span>
+                        </div>
+                        <span class="history-expand-icon">▼</span>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-inner">
+                            <div class="history-result">
+                                <span class="history-result-icon">🍽️</span>
+                                <span class="history-result-text">Candle-Light Dinner</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">🎬</span>
+                                <span class="history-result-text">Rom-Com Marathon</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">✨</span>
+                                <span class="history-result-text">Couple Massage</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">💕</span>
+                                <span class="history-result-text">Liebesbrief schreiben</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-item" onclick="toggleHistoryItem(this)">
+                    <div class="history-item-header">
+                        <span class="history-date">Gestern, 20:15</span>
+                        <div class="history-preview">
+                            <span class="history-preview-dot food"></span>
+                            <span class="history-preview-dot movie"></span>
+                            <span class="history-preview-dot together"></span>
+                            <span class="history-preview-dot intimacy"></span>
+                        </div>
+                        <span class="history-expand-icon">▼</span>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-inner">
+                            <div class="history-result">
+                                <span class="history-result-icon">🍽️</span>
+                                <span class="history-result-text">Picknick im Wohnzimmer</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">🎬</span>
+                                <span class="history-result-text">Thriller Night</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">✨</span>
+                                <span class="history-result-text">Sternegucken</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">💕</span>
+                                <span class="history-result-text">36 Fragen der Liebe</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-item" onclick="toggleHistoryItem(this)">
+                    <div class="history-item-header">
+                        <span class="history-date">25. Jan. 2026</span>
+                        <div class="history-preview">
+                            <span class="history-preview-dot food"></span>
+                            <span class="history-preview-dot movie"></span>
+                            <span class="history-preview-dot together"></span>
+                            <span class="history-preview-dot intimacy"></span>
+                        </div>
+                        <span class="history-expand-icon">▼</span>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-inner">
+                            <div class="history-result">
+                                <span class="history-result-icon">🍽️</span>
+                                <span class="history-result-text">Reise um die Welt</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">🌍</span>
+                                <span class="history-result-text">Italienische Küche</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">🎬</span>
+                                <span class="history-result-text">Nostalgieabend</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">✨</span>
+                                <span class="history-result-text">Tanzen lernen</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">💕</span>
+                                <span class="history-result-text">Traumreise planen</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="history-item" onclick="toggleHistoryItem(this)">
+                    <div class="history-item-header">
+                        <span class="history-date">20. Jan. 2026</span>
+                        <div class="history-preview">
+                            <span class="history-preview-dot food"></span>
+                            <span class="history-preview-dot movie"></span>
+                            <span class="history-preview-dot together"></span>
+                            <span class="history-preview-dot intimacy"></span>
+                        </div>
+                        <span class="history-expand-icon">▼</span>
+                    </div>
+                    <div class="history-item-content">
+                        <div class="history-item-inner">
+                            <div class="history-result">
+                                <span class="history-result-icon">🍽️</span>
+                                <span class="history-result-text">Gemeinsam Kochen</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">🎬</span>
+                                <span class="history-result-text">Dokumentarfilm</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">✨</span>
+                                <span class="history-result-text">Brettspielabend</span>
+                            </div>
+                            <div class="history-result">
+                                <span class="history-result-icon">💕</span>
+                                <span class="history-result-text">Bucket List erstellen</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Demo State Management
+        function showState(state) {
+            // Reset all buttons
+            document.querySelectorAll('.demo-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Hide all content
+            document.getElementById('slotMachine').classList.add('hidden');
+            document.getElementById('registrationForm').classList.add('hidden');
+            document.getElementById('successCard').classList.add('hidden');
+            document.getElementById('historySection').classList.add('hidden');
+            document.getElementById('freeSpinsBadge').classList.add('hidden');
+            document.getElementById('welcomeUser').classList.add('hidden');
+            
+            switch(state) {
+                case 'freeSpins':
+                    document.getElementById('slotMachine').classList.remove('hidden');
+                    document.getElementById('freeSpinsBadge').classList.remove('hidden');
+                    document.getElementById('freeSpinsCount').textContent = '3';
+                    break;
+                    
+                case 'freeSpins2':
+                    document.getElementById('slotMachine').classList.remove('hidden');
+                    document.getElementById('freeSpinsBadge').classList.remove('hidden');
+                    document.getElementById('freeSpinsCount').textContent = '1';
+                    break;
+                    
+                case 'registration':
+                    document.getElementById('registrationForm').classList.remove('hidden');
+                    break;
+                    
+                case 'success':
+                    document.getElementById('successCard').classList.remove('hidden');
+                    break;
+                    
+                case 'loggedIn':
+                    document.getElementById('slotMachine').classList.remove('hidden');
+                    document.getElementById('historySection').classList.remove('hidden');
+                    document.getElementById('welcomeUser').classList.remove('hidden');
+                    document.getElementById('welcomeUser').textContent = 'Willkommen zurück, Julia! 👋';
+                    break;
+            }
+        }
+        
+        // Checkbox handling
+        function updateSubmitButton() {
+            const consent = document.getElementById('consent');
+            const submitBtn = document.getElementById('submitBtn');
+            if (consent.checked) {
+                submitBtn.classList.add('active');
+            } else {
+                submitBtn.classList.remove('active');
+            }
+        }
+        
+        // History accordion
+        function toggleHistoryItem(item) {
+            // Close all other items
+            document.querySelectorAll('.history-item').forEach(i => {
+                if (i !== item) i.classList.remove('expanded');
+            });
+            // Toggle clicked item
+            item.classList.toggle('expanded');
+        }
+        
+        // Simulate registration
+        function simulateRegistration() {
+            const consent = document.getElementById('consent');
+            if (!consent.checked) {
+                alert('Bitte stimme den Bedingungen zu.');
+                return;
+            }
+            
+            const firstName = document.getElementById('firstName').value;
+            const email = document.getElementById('email').value;
+            
+            if (!firstName || !email) {
+                alert('Bitte fülle alle Felder aus.');
+                return;
+            }
+            
+            // Show success
+            showState('success');
+            document.querySelectorAll('.demo-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.demo-btn')[3].classList.add('active');
+        }
+    </script>
+</body>
+</html>

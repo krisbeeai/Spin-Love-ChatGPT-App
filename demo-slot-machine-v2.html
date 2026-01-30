@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpinLove Slot Machine - Demo v2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: white;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    /* ========================================
+       LANGUAGE TOGGLE
+       ======================================== */
+    .lang-toggle {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 100;
+    }
+    
+    .lang-toggle label {
+      color: #9ca3af;
+    }
+    
+    .lang-toggle select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    /* ========================================
+       HEADER
+       ======================================== */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      margin-top: 32px;
+    }
+    
+    .header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FF006E, #9D4EDD, #DC0073);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #9ca3af;
+      font-size: 16px;
+    }
+    
+    /* ========================================
+       SLOT MACHINE FRAME
+       ======================================== */
+    .slot-machine {
+      background: linear-gradient(145deg, #1a1a2e, #16213e);
+      border: 4px solid #FF006E;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 
+        0 0 60px rgba(255, 0, 110, 0.3),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .slot-machine::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 0, 110, 0.1) 0%, transparent 50%);
+      animation: glow-rotate 10s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes glow-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ========================================
+       SLOT REELS CONTAINER
+       ======================================== */
+    .reels-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 700px) {
+      .reels-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    /* ========================================
+       SINGLE SLOT REEL
+       ======================================== */
+    .slot-reel {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.5s ease;
+    }
+    
+    .slot-reel.stopped {
+      border-color: var(--reel-color, #FF006E);
+      box-shadow: 0 0 30px var(--reel-color-alpha, rgba(255, 0, 110, 0.4));
+    }
+    
+    /* Category Header */
+    .reel-header {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .reel-header .emoji {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .reel-header .category-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--reel-color, #9ca3af);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Reel Window - the viewport */
+    .reel-window {
+      height: 240px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    /* Gradient overlays for depth effect */
+    .reel-window::before,
+    .reel-window::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 60px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .reel-window::before {
+      top: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.95), transparent);
+    }
+    
+    .reel-window::after {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.95), transparent);
+    }
+    
+    /* Center highlight line - always visible */
+    .reel-window .center-line {
+      position: absolute;
+      top: 50%;
+      left: 5%;
+      right: 5%;
+      height: 80px;
+      transform: translateY(-50%);
+      border: 2px solid var(--reel-color, rgba(255, 0, 110, 0.5));
+      border-radius: 8px;
+      z-index: 5;
+      pointer-events: none;
+      opacity: 0.5;
+      transition: opacity 0.3s ease;
+    }
+    
+    .slot-reel.stopped .center-line {
+      opacity: 1;
+      box-shadow: 0 0 15px var(--reel-color-alpha, rgba(255, 0, 110, 0.3));
+    }
+    
+    /* Spinning Strip - contains all items */
+    .reel-strip {
+      position: absolute;
+      width: 100%;
+      will-change: transform;
+    }
+    
+    /* Individual Item in Strip */
+    .reel-item {
+      height: 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    
+    .reel-item .item-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    
+    .reel-item .item-emotion {
+      font-size: 10px;
+      color: var(--reel-color, rgba(255, 255, 255, 0.5));
+      opacity: 0.7;
+    }
+    
+    /* Winner item highlight */
+    .reel-item.winner {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .slot-reel.stopped .reel-item.winner .item-title {
+      color: white;
+    }
+    
+    .slot-reel.stopped .reel-item.winner .item-emotion {
+      opacity: 1;
+    }
+    
+    /* ========================================
+       SPIN BUTTON
+       ======================================== */
+    .spin-button-container {
+      text-align: center;
+      margin-top: 24px;
+    }
+    
+    .spin-button {
+      background: linear-gradient(135deg, #FF006E, #DC0073);
+      color: white;
+      border: none;
+      padding: 18px 60px;
+      font-size: 20px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 30px rgba(255, 0, 110, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    
+    .spin-button:hover:not(:disabled) {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 10px 40px rgba(255, 0, 110, 0.7);
+    }
+    
+    .spin-button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    
+    .spin-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .spin-button.spinning {
+      animation: pulse-button 0.4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-button {
+      0%, 100% { box-shadow: 0 6px 30px rgba(255, 0, 110, 0.5); }
+      50% { box-shadow: 0 6px 50px rgba(255, 0, 110, 0.9); }
+    }
+    
+    /* ========================================
+       STATUS TEXT
+       ======================================== */
+    .status-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 16px;
+      color: #9ca3af;
+      min-height: 28px;
+      transition: all 0.3s ease;
+    }
+    
+    .status-text.highlight {
+      color: #FF006E;
+      font-weight: 700;
+      font-size: 18px;
+      text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+    }
+    
+    /* ========================================
+       WORLD SECTION
+       ======================================== */
+    .world-section {
+      background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.05));
+      border: 2px solid rgba(255, 149, 0, 0.5);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+      text-align: center;
+      display: none;
+    }
+    
+    .world-section.visible {
+      display: block;
+      animation: world-appear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes world-appear {
+      0% { 
+        opacity: 0; 
+        transform: translateY(40px) scale(0.8); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+    
+    .world-section .world-emoji {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+    
+    .world-section h2 {
+      font-size: 20px;
+      color: #FF9500;
+      margin-bottom: 12px;
+    }
+    
+    .world-section .world-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .world-section .world-description {
+      color: #d1d5db;
+      margin-bottom: 12px;
+    }
+    
+    .world-section .world-mood {
+      font-style: italic;
+      color: #FF9500;
+      font-size: 14px;
+    }
+    
+    /* ========================================
+       DEMO INFO
+       ======================================== */
+    .demo-info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    .demo-info strong {
+      color: #FF006E;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="lang-toggle">
+      <label>Language:</label>
+      <select id="lang-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+      </select>
+    </div>
+    
+    <div class="header">
+      <h1>💕 SpinLove</h1>
+      <p id="subtitle">Your Date Night Slot Machine</p>
+    </div>
+    
+    <div class="slot-machine">
+      <div class="reels-container" id="reels-container">
+        <!-- Reels will be generated here -->
+      </div>
+      
+      <div class="spin-button-container">
+        <button class="spin-button" id="spin-btn" onclick="startSpin()">
+          🎰 SPIN
+        </button>
+      </div>
+      
+      <div class="status-text" id="status-text">
+        Ready to spin!
+      </div>
+    </div>
+    
+    <div class="world-section" id="world-section">
+      <div class="world-emoji">🌍</div>
+      <h2>🌍 Around the World</h2>
+      <div class="world-title" id="world-title"></div>
+      <div class="world-description" id="world-description"></div>
+      <div class="world-mood" id="world-mood"></div>
+    </div>
+  </div>
+    
+  <div class="demo-info">
+    <strong>DEMO v2</strong> - Real spinning with slowdown effect
+  </div>
+
+  <script>
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    
+    const ITEM_HEIGHT = 80;           // Height of each item in px
+    const SPIN_DURATION = 3000;       // Base spin duration before first stop
+    const STOP_INTERVAL = 1000;       // Delay between each reel stopping
+    const EXTRA_SPINS = 3;            // Extra full rotations before stopping
+    
+    const REEL_COLORS = {
+      food: { color: '#FF9500', alpha: 'rgba(255, 149, 0, 0.3)' },
+      movie: { color: '#AF52DE', alpha: 'rgba(175, 82, 222, 0.3)' },
+      together: { color: '#FF2D55', alpha: 'rgba(255, 45, 85, 0.3)' },
+      intimacy: { color: '#FF006E', alpha: 'rgba(255, 0, 110, 0.3)' }
+    };
+    
+    // ========================================
+    // DEMO DATA
+    // ========================================
+    
+    const DEMO_DATA = {
+      en: {
+        subtitle: 'Your Date Night Slot Machine',
+        categories: [
+          {
+            id: 'food',
+            name: 'Food & Dining',
+            emoji: '🍽️',
+            items: [
+              { title: 'Candle-Light Dinner', emotion: 'Romance' },
+              { title: 'Around the World', emotion: 'Adventure', hasSpecial: true },
+              { title: 'Fondue Night', emotion: 'Coziness' },
+              { title: 'Breakfast for Dinner', emotion: 'Spontaneity' },
+              { title: 'Tapas & Wine', emotion: 'Variety' },
+              { title: 'Sushi Date', emotion: 'Elegance' },
+              { title: 'Pizza Night', emotion: 'Comfort' },
+              { title: 'Picnic Indoors', emotion: 'Playfulness' },
+            ]
+          },
+          {
+            id: 'movie',
+            name: 'Film & Entertainment',
+            emoji: '🎬',
+            items: [
+              { title: 'Rom-Com Marathon', emotion: 'Laughter' },
+              { title: 'Foreign Film Night', emotion: 'Culture' },
+              { title: 'Childhood Favorites', emotion: 'Nostalgia' },
+              { title: 'Documentary Date', emotion: 'Curiosity' },
+              { title: 'Scary Movie Night', emotion: 'Excitement' },
+              { title: 'Concert Film', emotion: 'Energy' },
+              { title: 'Classic Cinema', emotion: 'Elegance' },
+              { title: 'Anime Night', emotion: 'Wonder' },
+            ]
+          },
+          {
+            id: 'together',
+            name: 'Quality Time',
+            emoji: '💞',
+            items: [
+              { title: 'Couples Massage', emotion: 'Relaxation' },
+              { title: 'Memory Lane Walk', emotion: 'Connection' },
+              { title: 'Dance in Kitchen', emotion: 'Joy' },
+              { title: 'Stargazing Night', emotion: 'Wonder' },
+              { title: 'Puzzle Together', emotion: 'Teamwork' },
+              { title: 'Paint & Sip', emotion: 'Creativity' },
+              { title: 'Board Game Battle', emotion: 'Fun' },
+              { title: 'Cook Together', emotion: 'Bonding' },
+            ]
+          },
+          {
+            id: 'intimacy',
+            name: 'Romance & Intimacy',
+            emoji: '🔥',
+            items: [
+              { title: 'Love Letters', emotion: 'Deep Love' },
+              { title: 'Sensual Massage', emotion: 'Desire' },
+              { title: 'Whispered Dreams', emotion: 'Trust' },
+              { title: 'Blindfold Surprises', emotion: 'Anticipation' },
+              { title: 'Slow Dance', emotion: 'Tenderness' },
+              { title: 'Candlelit Bath', emotion: 'Relaxation' },
+              { title: 'Memory Sharing', emotion: 'Intimacy' },
+              { title: 'Future Planning', emotion: 'Hope' },
+            ]
+          }
+        ],
+        worldCuisine: {
+          title: '🇯🇵 Japanese',
+          description: 'Sushi, sake, and the art of umami',
+          mood: 'Zen serenity meets perfection'
+        },
+        status: {
+          ready: 'Ready to spin!',
+          spinning: '🎰 Spinning all reels...',
+          stopping: '✨ Stopping',
+          complete: '💕 Your perfect evening awaits!'
+        }
+      },
+      de: {
+        subtitle: 'Eure Date-Night Slot Machine',
+        categories: [
+          {
+            id: 'food',
+            name: 'Essen & Genuss',
+            emoji: '🍽️',
+            items: [
+              { title: 'Candle-Light Dinner', emotion: 'Romantik' },
+              { title: 'Around the World', emotion: 'Abenteuer', hasSpecial: true },
+              { title: 'Fondue Abend', emotion: 'Gemütlichkeit' },
+              { title: 'Breakfast for Dinner', emotion: 'Spontanität' },
+              { title: 'Tapas & Wein', emotion: 'Vielfalt' },
+              { title: 'Sushi Date', emotion: 'Eleganz' },
+              { title: 'Pizza Abend', emotion: 'Gemütlich' },
+              { title: 'Indoor Picknick', emotion: 'Verspieltheit' },
+            ]
+          },
+          {
+            id: 'movie',
+            name: 'Film & Entertainment',
+            emoji: '🎬',
+            items: [
+              { title: 'Rom-Com Marathon', emotion: 'Lachen' },
+              { title: 'Fremdsprachiger Film', emotion: 'Kultur' },
+              { title: 'Kindheits-Favoriten', emotion: 'Nostalgie' },
+              { title: 'Dokumentar-Date', emotion: 'Neugier' },
+              { title: 'Gruselfilm-Nacht', emotion: 'Aufregung' },
+              { title: 'Konzertfilm', emotion: 'Energie' },
+              { title: 'Klassiker Kino', emotion: 'Eleganz' },
+              { title: 'Anime Abend', emotion: 'Staunen' },
+            ]
+          },
+          {
+            id: 'together',
+            name: 'Zeit zu Zweit',
+            emoji: '💞',
+            items: [
+              { title: 'Partner-Massage', emotion: 'Entspannung' },
+              { title: 'Erinnerungs-Spaziergang', emotion: 'Verbindung' },
+              { title: 'Küchentanz', emotion: 'Freude' },
+              { title: 'Sterne-Beobachtung', emotion: 'Staunen' },
+              { title: 'Puzzle zu Zweit', emotion: 'Teamwork' },
+              { title: 'Malen & Wein', emotion: 'Kreativität' },
+              { title: 'Brettspiel-Battle', emotion: 'Spaß' },
+              { title: 'Zusammen Kochen', emotion: 'Bindung' },
+            ]
+          },
+          {
+            id: 'intimacy',
+            name: 'Erotik & Intimität',
+            emoji: '🔥',
+            items: [
+              { title: 'Liebesbriefe', emotion: 'Tiefe Liebe' },
+              { title: 'Sinnliche Massage', emotion: 'Verlangen' },
+              { title: 'Geflüsterte Träume', emotion: 'Vertrauen' },
+              { title: 'Augenbinden-Spiel', emotion: 'Spannung' },
+              { title: 'Langsamer Tanz', emotion: 'Zärtlichkeit' },
+              { title: 'Kerzenbad', emotion: 'Entspannung' },
+              { title: 'Erinnerungen teilen', emotion: 'Intimität' },
+              { title: 'Zukunft planen', emotion: 'Hoffnung' },
+            ]
+          }
+        ],
+        worldCuisine: {
+          title: '🇯🇵 Japanisch',
+          description: 'Sushi, Sake und die Kunst des Umami',
+          mood: 'Zen-Gelassenheit trifft Perfektion'
+        },
+        status: {
+          ready: 'Bereit zum Drehen!',
+          spinning: '🎰 Alle Walzen drehen sich...',
+          stopping: '✨ Stoppe',
+          complete: '💕 Euer perfekter Abend wartet!'
+        }
+      }
+    };
+    
+    // ========================================
+    // STATE
+    // ========================================
+    
+    let currentLang = 'en';
+    let isSpinning = false;
+    let currentResults = [];
+    let hasWorldCuisine = false;
+    
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    
+    function init() {
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      document.getElementById('subtitle').textContent = data.subtitle;
+      renderReels(data.categories);
+      updateStatus('ready');
+    }
+    
+    function renderReels(categories) {
+      const container = document.getElementById('reels-container');
+      container.innerHTML = '';
+      
+      categories.forEach((cat, index) => {
+        const colors = REEL_COLORS[cat.id];
+        
+        const reel = document.createElement('div');
+        reel.className = 'slot-reel';
+        reel.id = `reel-${index}`;
+        reel.style.setProperty('--reel-color', colors.color);
+        reel.style.setProperty('--reel-color-alpha', colors.alpha);
+        
+        // Build the strip with multiple copies for seamless looping
+        const itemsHtml = buildStripItems(cat.items, colors.color);
+        
+        reel.innerHTML = `
+          <div class="reel-header">
+            <span class="emoji">${cat.emoji}</span>
+            <span class="category-name">${cat.name}</span>
+          </div>
+          
+          <div class="reel-window">
+            <div class="center-line"></div>
+            <div class="reel-strip" id="strip-${index}">
+              ${itemsHtml}
+            </div>
+          </div>
+        `;
+        
+        container.appendChild(reel);
+      });
+    }
+    
+    function buildStripItems(items, color) {
+      // Create 5 copies of items for smooth looping
+      let html = '';
+      for (let copy = 0; copy < 5; copy++) {
+        items.forEach((item, idx) => {
+          html += `
+            <div class="reel-item" data-index="${idx}" style="--reel-color: ${color}">
+              <div class="item-title">${item.title}</div>
+              <div class="item-emotion">💞 ${item.emotion}</div>
+            </div>
+          `;
+        });
+      }
+      return html;
+    }
+    
+    // ========================================
+    // SPIN LOGIC - REAL PHYSICS
+    // ========================================
+    
+    // Store animation state per reel
+    const reelStates = {};
+    
+    async function startSpin() {
+      if (isSpinning) return;
+      isSpinning = true;
+      
+      // Reset state
+      document.getElementById('world-section').classList.remove('visible');
+      document.querySelectorAll('.slot-reel').forEach(reel => {
+        reel.classList.remove('stopped');
+      });
+      document.querySelectorAll('.reel-item').forEach(item => {
+        item.classList.remove('winner');
+      });
+      
+      // Generate random results FIRST
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      currentResults = data.categories.map(cat => {
+        const winnerIndex = Math.floor(Math.random() * cat.items.length);
+        return { 
+          category: cat, 
+          item: cat.items[winnerIndex],
+          winnerIndex: winnerIndex
+        };
+      });
+      
+      hasWorldCuisine = currentResults.some(r => r.item.hasSpecial);
+      
+      // Update button
+      const btn = document.getElementById('spin-btn');
+      btn.disabled = true;
+      btn.classList.add('spinning');
+      btn.textContent = '🎰 SPINNING...';
+      
+      updateStatus('spinning');
+      
+      // Start all reels spinning
+      for (let i = 0; i < currentResults.length; i++) {
+        startReelSpin(i);
+      }
+      
+      // Wait initial spin time
+      await sleep(SPIN_DURATION);
+      
+      // Stop reels sequentially
+      for (let i = 0; i < currentResults.length; i++) {
+        await stopReel(i, currentResults[i]);
+        if (i < currentResults.length - 1) {
+          await sleep(STOP_INTERVAL);
+        }
+      }
+      
+      // Complete
+      updateStatus('complete');
+      
+      if (hasWorldCuisine) {
+        const world = data.worldCuisine;
+        document.getElementById('world-title').textContent = world.title;
+        document.getElementById('world-description').textContent = world.description;
+        document.getElementById('world-mood').textContent = `"${world.mood}"`;
+        document.getElementById('world-section').classList.add('visible');
+      }
+      
+      btn.disabled = false;
+      btn.classList.remove('spinning');
+      btn.textContent = '🎰 SPIN';
+      isSpinning = false;
+    }
+    
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    function startReelSpin(index) {
+      const strip = document.getElementById(`strip-${index}`);
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      const itemCount = data.categories[index].items.length;
+      const totalHeight = itemCount * ITEM_HEIGHT;
+      
+      // Initialize state
+      reelStates[index] = {
+        position: 0,
+        speed: 20 + (index * 2),
+        running: true
+      };
+      
+      function animate() {
+        const state = reelStates[index];
+        if (!state.running) return;
+        
+        state.position += state.speed;
+        
+        // Loop back
+        if (state.position >= totalHeight * 2) {
+          state.position -= totalHeight;
+        }
+        
+        strip.style.transform = `translateY(-${state.position}px)`;
+        
+        requestAnimationFrame(animate);
+      }
+      
+      requestAnimationFrame(animate);
+    }
+    
+    async function stopReel(index, result) {
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      const reel = document.getElementById(`reel-${index}`);
+      const strip = document.getElementById(`strip-${index}`);
+      const itemCount = data.categories[index].items.length;
+      const totalHeight = itemCount * ITEM_HEIGHT;
+      const state = reelStates[index];
+      
+      updateStatus('stopping', result.category.name);
+      
+      // Stop the fast animation loop
+      state.running = false;
+      
+      // Get current position
+      const currentPos = state.position;
+      
+      // Calculate target: center the winner in viewport
+      // Viewport is 240px, item is 80px, so center offset is 80px
+      const viewportCenter = 80;
+      const winnerOffset = result.winnerIndex * ITEM_HEIGHT;
+      
+      // Target in second set of items + extra rotations
+      let targetPos = totalHeight + winnerOffset - viewportCenter;
+      targetPos += EXTRA_SPINS * totalHeight;
+      
+      // Make sure we go forward
+      while (targetPos <= currentPos) {
+        targetPos += totalHeight;
+      }
+      
+      // Animate with easing
+      await animateSlowdown(strip, currentPos, targetPos, 1500);
+      
+      // Mark stopped
+      reel.classList.add('stopped');
+      
+      // Highlight winner
+      const items = strip.querySelectorAll('.reel-item');
+      items.forEach(item => {
+        if (parseInt(item.dataset.index) === result.winnerIndex) {
+          item.classList.add('winner');
+        }
+      });
+    }
+    
+    function animateSlowdown(strip, from, to, duration) {
+      return new Promise(resolve => {
+        const startTime = performance.now();
+        
+        function tick(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          
+          // Cubic ease-out for nice slowdown
+          const ease = 1 - Math.pow(1 - progress, 3);
+          const pos = from + (to - from) * ease;
+          
+          strip.style.transform = `translateY(-${pos}px)`;
+          
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            resolve();
+          }
+        }
+        
+        requestAnimationFrame(tick);
+      });
+    }
+    
+    function updateStatus(state, categoryName = '') {
+      const el = document.getElementById('status-text');
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      
+      el.classList.remove('highlight');
+      
+      switch (state) {
+        case 'spinning':
+          el.textContent = data.status.spinning;
+          break;
+        case 'stopping':
+          el.textContent = `${data.status.stopping} ${categoryName}...`;
+          el.classList.add('highlight');
+          break;
+        case 'complete':
+          el.textContent = data.status.complete;
+          el.classList.add('highlight');
+          break;
+        default:
+          el.textContent = data.status.ready;
+      }
+    }
+    
+    function changeLanguage(lang) {
+      currentLang = lang;
+      init();
+    }
+    
+    // Start
+    init();
+  </script>
+</body>
+</html>

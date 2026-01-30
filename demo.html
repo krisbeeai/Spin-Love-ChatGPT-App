@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpinLove - Demo Preview</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f0f23 100%);
+      min-height: 100vh;
+      color: white;
+      padding: 20px;
+    }
+    
+    .demo-header {
+      text-align: center;
+      padding: 20px;
+      margin-bottom: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .demo-header h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #FF006E, #9D4EDD);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .demo-header p {
+      color: #9ca3af;
+      font-size: 14px;
+    }
+    
+    .demo-controls {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .demo-btn {
+      background: linear-gradient(135deg, #FF006E, #9D4EDD);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 0, 110, 0.4);
+    }
+    
+    .demo-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .demo-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: none;
+    }
+
+    /* ===== WIDGET STYLES ===== */
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    
+    /* Language Toggle */
+    .lang-toggle {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-bottom: 20px;
+      width: fit-content;
+      margin-left: auto;
+    }
+    
+    .lang-toggle label {
+      color: #9ca3af;
+    }
+    
+    .lang-toggle select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    
+    .lang-toggle select:focus {
+      outline: none;
+      border-color: #FF006E;
+    }
+    
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    
+    .header h1 {
+      font-size: 28px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #FF006E, #9D4EDD, #DC0073);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #9ca3af;
+      font-size: 14px;
+    }
+    
+    /* World Section */
+    .world-section {
+      background: linear-gradient(135deg, rgba(157, 78, 221, 0.2), rgba(255, 0, 110, 0.2));
+      border: 1px solid rgba(157, 78, 221, 0.3);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    
+    .world-emoji {
+      font-size: 48px;
+      margin-bottom: 12px;
+      animation: spin 20s linear infinite;
+    }
+    
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    .world-section h2 {
+      font-size: 18px;
+      color: #9D4EDD;
+      margin-bottom: 12px;
+    }
+    
+    .world-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .world-description {
+      color: #d1d5db;
+      margin-bottom: 12px;
+    }
+    
+    .world-sound {
+      color: #9D4EDD;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    
+    .world-mood {
+      color: #9ca3af;
+      font-style: italic;
+      font-size: 14px;
+    }
+    
+    /* Results Grid */
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 600px) {
+      .results-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    /* Result Card */
+    .result-card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 20px;
+      transition: all 0.3s ease;
+    }
+    
+    .result-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    
+    .card-emoji {
+      font-size: 32px;
+    }
+    
+    .card-category {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.8;
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .card-description {
+      color: #d1d5db;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .card-emotion {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    /* Buttons */
+    .buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .btn {
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #FF006E, #DC0073);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(255, 0, 110, 0.4);
+    }
+    
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    /* Loading Animation */
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    .loading .spinner {
+      font-size: 64px;
+      animation: pulse 1s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .loading p {
+      margin-top: 16px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-header">
+    <h1>🎰 SpinLove Demo Preview</h1>
+    <p>Standalone-Vorschau des ChatGPT Widgets – klicke auf "Neuer Spin" um die Animation zu sehen!</p>
+    <div id="detected-lang" style="margin-top: 12px; padding: 8px 16px; background: rgba(157, 78, 221, 0.3); border-radius: 20px; display: inline-block; font-size: 13px;">
+      🌐 Erkannte Browser-Sprache: <strong id="browser-lang">...</strong>
+    </div>
+  </div>
+  
+  <div class="demo-controls">
+    <button class="demo-btn" onclick="spinNew()">🎰 Neuer Spin</button>
+    <button class="demo-btn secondary" onclick="spinWithWorld()">🌍 Mit Around the World</button>
+    <button class="demo-btn secondary" onclick="changeLanguage()">🌐 Sprache wechseln</button>
+  </div>
+
+  <div class="container" id="app">
+    <!-- Content will be rendered here -->
+  </div>
+
+  <script>
+    // ===== TRANSLATIONS =====
+    const translations = {
+      en: {
+        resultsTitle: 'Your Perfect Evening!',
+        resultsSubtitle: "Here's your personalized date program",
+        worldTitle: 'Around the World',
+        newSpinButton: '🔄 New Spin',
+        shareButton: '📤 Share',
+        languageLabel: 'Language',
+        loading: '🎰 The slot machine is spinning...',
+        categoryFood: 'Food & Dining',
+        categoryMovie: 'Film & Entertainment',
+        categoryTogether: 'Quality Time',
+        categoryIntimacy: 'Romance & Intimacy'
+      },
+      de: {
+        resultsTitle: 'Euer perfekter Abend!',
+        resultsSubtitle: 'Hier ist euer individuelles Date-Programm',
+        worldTitle: 'Around the World',
+        newSpinButton: '🔄 Neuer Spin',
+        shareButton: '📤 Teilen',
+        languageLabel: 'Sprache',
+        loading: '🎰 Die Slot Machine dreht sich...',
+        categoryFood: 'Essen & Genuss',
+        categoryMovie: 'Film & Entertainment',
+        categoryTogether: 'Zeit zu Zweit',
+        categoryIntimacy: 'Erotik & Intimität'
+      },
+      es: {
+        resultsTitle: '¡Tu velada perfecta!',
+        resultsSubtitle: 'Aquí está tu programa de cita personalizado',
+        worldTitle: 'Alrededor del Mundo',
+        newSpinButton: '🔄 Nuevo Giro',
+        shareButton: '📤 Compartir',
+        languageLabel: 'Idioma',
+        loading: '🎰 La máquina está girando...',
+        categoryFood: 'Comida y Gastronomía',
+        categoryMovie: 'Cine y Entretenimiento',
+        categoryTogether: 'Tiempo de Calidad',
+        categoryIntimacy: 'Romance e Intimidad'
+      },
+      fr: {
+        resultsTitle: 'Votre soirée parfaite !',
+        resultsSubtitle: 'Voici votre programme de rendez-vous personnalisé',
+        worldTitle: 'Tour du Monde',
+        newSpinButton: '🔄 Nouveau Tour',
+        shareButton: '📤 Partager',
+        languageLabel: 'Langue',
+        loading: '🎰 La machine tourne...',
+        categoryFood: 'Cuisine et Gastronomie',
+        categoryMovie: 'Cinéma et Divertissement',
+        categoryTogether: 'Moments à Deux',
+        categoryIntimacy: 'Romance et Intimité'
+      },
+      it: {
+        resultsTitle: 'La vostra serata perfetta!',
+        resultsSubtitle: 'Ecco il vostro programma di appuntamento personalizzato',
+        worldTitle: 'Giro del Mondo',
+        newSpinButton: '🔄 Nuovo Giro',
+        shareButton: '📤 Condividi',
+        languageLabel: 'Lingua',
+        loading: '🎰 La slot machine sta girando...',
+        categoryFood: 'Cucina e Gastronomia',
+        categoryMovie: 'Cinema e Intrattenimento',
+        categoryTogether: 'Tempo di Qualità',
+        categoryIntimacy: 'Romanticismo e Intimità'
+      }
+    };
+
+    // ===== SAMPLE DATA =====
+    const sampleData = {
+      en: {
+        food: [
+          { title: 'Candle-Light Dinner at Home', description: 'Transform your living room into a restaurant just for two.', emotion: 'Romance, Tenderness, Slowing Down' },
+          { title: 'Pasta & Wine – Italian Night', description: 'Cook spaghetti, open a bottle of red wine – and only speak with an Italian accent.', emotion: 'Passion, Humor, Sensuality' },
+          { title: 'Fondue or Raclette Night', description: 'Warmth, cheese, and closeness – perfect for cold evenings.', emotion: 'Coziness, Indulgence, Closeness' },
+          { title: 'Tapas & Small Bites', description: 'Many small bites – shared pleasure, double happiness.', emotion: 'Variety, Closeness, Play' }
+        ],
+        movie: [
+          { title: 'Romantic Movie Night', description: 'Candlelight, cozy blanket, love movie – all you need is each other.', emotion: 'Closeness, Warmth, Tenderness' },
+          { title: 'Comedy & Chill', description: "Laugh until you cry – together it's twice as funny.", emotion: 'Joy, Lightness, Connection' },
+          { title: 'Horror & Cuddle Night', description: 'Heart pounding guaranteed – and maybe you end up even closer together.', emotion: 'Tension, Adrenaline, Closeness' }
+        ],
+        together: [
+          { title: 'Deep Talk & Questions Night', description: "Let the conversation go deeper – with questions you've never asked each other.", emotion: 'Depth, Honesty, Trust' },
+          { title: 'Dance in the Living Room', description: 'Light a candle, play music – and dance as if you were alone in the world.', emotion: 'Freedom, Sensuality, Joy' },
+          { title: 'Game Night for Lovers', description: 'Who knows the other better?', emotion: 'Fun, Playfulness, Closeness' }
+        ],
+        intimacy: [
+          { title: 'The Slow Kiss Ritual', description: 'A single kiss – but so slow that seconds become an eternity.', emotion: 'Intensity, Presence, Erotica' },
+          { title: 'Sensual Massage Ritual', description: 'An aroma massage – slow, attentive & full of presence.', emotion: 'Surrender, Calm, Physical Closeness' },
+          { title: 'Touch Map Game', description: "Explore each other's favorite zones – without words.", emotion: 'Trust, Discovery, Closeness' }
+        ],
+        world: [
+          { title: '🇮🇹 Italian – La Dolce Vita', description: 'Pizza, pasta, amore. Maybe tiramisu as a sweet finale?', sound: '🎵 Italian street music', mood: 'Make it like Rome – with lots of flavor and even more love.' },
+          { title: '🍣 Japanese – Sushi & Zen', description: 'Make your own sushi rolls or order ramen – plus chopstick challenge.', sound: '🎵 Gentle flutes, flowing water', mood: 'Balance, precision, indulgence – harmony in every bite.' },
+          { title: '🌮 Mexican – Fiesta Night', description: 'Tacos, guacamole, tequila – and maybe a little dance afterwards?', sound: '🎵 Maracas, Latin beats', mood: 'An evening full of colors, fire, and flavor.' },
+          { title: '🥖 French – Paris at Home', description: "Baguette, cheese, red wine – and maybe a little kiss under 'La vie en rose'.", sound: '🎵 French jazz, street ambience', mood: 'An evening like a stroll along the Seine.' }
+        ]
+      },
+      de: {
+        food: [
+          { title: 'Candle-Light Dinner zu Hause', description: 'Verwandelt euer Wohnzimmer in ein Restaurant nur für zwei.', emotion: 'Romantik, Zärtlichkeit, Entschleunigung' },
+          { title: 'Pasta & Wein – Italian Night', description: 'Kocht Spaghetti, öffnet eine Flasche Rotwein – und sprecht nur mit italienischem Akzent.', emotion: 'Leidenschaft, Humor, Sinnlichkeit' },
+          { title: 'Fondue oder Raclette Abend', description: 'Wärme, Käse und Nähe – perfekt für kalte Abende.', emotion: 'Gemütlichkeit, Genuss, Nähe' }
+        ],
+        movie: [
+          { title: 'Romantic Movie Night', description: 'Kerzenlicht, Kuscheldecke, Liebesfilm – alles, was ihr braucht, ist euch.', emotion: 'Nähe, Wärme, Zärtlichkeit' },
+          { title: 'Comedy & Chill', description: "Lacht, bis euch die Tränen kommen – gemeinsam ist's doppelt lustig.", emotion: 'Freude, Leichtigkeit, Verbundenheit' }
+        ],
+        together: [
+          { title: 'Deep Talk & Questions Night', description: 'Lasst das Gespräch tiefer gehen – mit Fragen, die ihr euch noch nie gestellt habt.', emotion: 'Tiefe, Ehrlichkeit, Vertrauen' },
+          { title: 'Dance in the Living Room', description: 'Zündet eine Kerze an, spielt Musik – und tanzt, als wärt ihr allein auf der Welt.', emotion: 'Freiheit, Sinnlichkeit, Freude' }
+        ],
+        intimacy: [
+          { title: 'The Slow Kiss Ritual', description: 'Ein einziger Kuss – aber so langsam, dass aus Sekunden eine Ewigkeit wird.', emotion: 'Intensität, Präsenz, Erotik' },
+          { title: 'Sensual Massage Ritual', description: 'Eine Aromamassage – langsam, aufmerksam & voller Präsenz.', emotion: 'Hingabe, Ruhe, körperliche Nähe' }
+        ],
+        world: [
+          { title: '🇮🇹 Italienisch – La Dolce Vita', description: 'Pizza, Pasta, Amore. Vielleicht ein Tiramisu als süßes Finale?', sound: '🎵 Italienische Straßenmusik', mood: "Macht's euch wie in Rom – mit viel Geschmack und noch mehr Liebe." },
+          { title: '🌮 Mexikanisch – Fiesta Night', description: 'Tacos, Guacamole, Tequila – und vielleicht ein kleiner Tanz danach?', sound: '🎵 Maracas, lateinamerikanische Beats', mood: 'Ein Abend voller Farben, Feuer und Geschmack.' }
+        ]
+      }
+    };
+
+    // Spanish translations
+    sampleData.es = {
+      food: [
+        { title: 'Cena a la luz de las velas en casa', description: 'Transforma tu salón en un restaurante solo para dos.', emotion: 'Romance, Ternura, Desaceleración' },
+        { title: 'Pasta y Vino – Noche Italiana', description: 'Cocina espaguetis, abre una botella de vino tinto – y hablad solo con acento italiano.', emotion: 'Pasión, Humor, Sensualidad' },
+        { title: 'Noche de Fondue o Raclette', description: 'Calidez, queso y cercanía – perfecto para noches frías.', emotion: 'Comodidad, Placer, Cercanía' }
+      ],
+      movie: [
+        { title: 'Noche de Película Romántica', description: 'Luz de velas, manta acogedora, película de amor – todo lo que necesitáis sois vosotros.', emotion: 'Cercanía, Calidez, Ternura' },
+        { title: 'Comedia y Relax', description: 'Reíd hasta llorar – juntos es el doble de divertido.', emotion: 'Alegría, Ligereza, Conexión' }
+      ],
+      together: [
+        { title: 'Noche de Conversación Profunda', description: 'Deja que la conversación sea más profunda – con preguntas que nunca os habéis hecho.', emotion: 'Profundidad, Honestidad, Confianza' },
+        { title: 'Baile en el Salón', description: 'Enciende una vela, pon música – y baila como si estuvierais solos en el mundo.', emotion: 'Libertad, Sensualidad, Alegría' }
+      ],
+      intimacy: [
+        { title: 'El Ritual del Beso Lento', description: 'Un solo beso – pero tan lento que los segundos se convierten en eternidad.', emotion: 'Intensidad, Presencia, Erótica' },
+        { title: 'Ritual de Masaje Sensual', description: 'Un masaje aromático – lento, atento y lleno de presencia.', emotion: 'Entrega, Calma, Cercanía física' }
+      ],
+      world: [
+        { title: '🇮🇹 Italiano – La Dolce Vita', description: 'Pizza, pasta, amore. ¿Quizás un tiramisú como dulce final?', sound: '🎵 Música callejera italiana', mood: 'Hazlo como en Roma – con mucho sabor y aún más amor.' },
+        { title: '🌮 Mexicano – Noche de Fiesta', description: 'Tacos, guacamole, tequila – ¿y quizás un baile después?', sound: '🎵 Maracas, ritmos latinos', mood: 'Una velada llena de colores, fuego y sabor.' }
+      ]
+    };
+
+    // French translations
+    sampleData.fr = {
+      food: [
+        { title: 'Dîner aux chandelles à la maison', description: 'Transformez votre salon en un restaurant rien que pour deux.', emotion: 'Romance, Tendresse, Ralentissement' },
+        { title: 'Pâtes & Vin – Soirée Italienne', description: 'Cuisinez des spaghetti, ouvrez une bouteille de vin rouge – et parlez uniquement avec un accent italien.', emotion: 'Passion, Humour, Sensualité' },
+        { title: 'Soirée Fondue ou Raclette', description: 'Chaleur, fromage et proximité – parfait pour les soirées froides.', emotion: 'Confort, Gourmandise, Proximité' }
+      ],
+      movie: [
+        { title: 'Soirée Film Romantique', description: "Chandelles, couverture douillette, film d'amour – tout ce qu'il vous faut, c'est vous deux.", emotion: 'Proximité, Chaleur, Tendresse' },
+        { title: 'Comédie et Détente', description: "Riez jusqu'aux larmes – à deux c'est deux fois plus drôle.", emotion: 'Joie, Légèreté, Connexion' }
+      ],
+      together: [
+        { title: 'Soirée Discussion Profonde', description: 'Laissez la conversation aller plus loin – avec des questions que vous ne vous êtes jamais posées.', emotion: 'Profondeur, Honnêteté, Confiance' },
+        { title: 'Danse dans le Salon', description: 'Allumez une bougie, mettez de la musique – et dansez comme si vous étiez seuls au monde.', emotion: 'Liberté, Sensualité, Joie' }
+      ],
+      intimacy: [
+        { title: 'Le Rituel du Baiser Lent', description: 'Un seul baiser – mais si lent que les secondes deviennent une éternité.', emotion: 'Intensité, Présence, Érotisme' },
+        { title: 'Rituel de Massage Sensuel', description: 'Un massage aux huiles – lent, attentif et plein de présence.', emotion: 'Abandon, Calme, Proximité physique' }
+      ],
+      world: [
+        { title: '🇮🇹 Italien – La Dolce Vita', description: 'Pizza, pâtes, amore. Peut-être un tiramisu pour finir en douceur ?', sound: '🎵 Musique de rue italienne', mood: "Faites comme à Rome – avec beaucoup de saveur et encore plus d'amour." },
+        { title: '🥖 Français – Paris à la Maison', description: "Baguette, fromage, vin rouge – et peut-être un petit baiser sous 'La vie en rose'.", sound: '🎵 Jazz français, ambiance de rue', mood: 'Une soirée comme une promenade le long de la Seine.' }
+      ]
+    };
+
+    // Italian translations
+    sampleData.it = {
+      food: [
+        { title: 'Cena a lume di candela a casa', description: 'Trasforma il tuo soggiorno in un ristorante solo per due.', emotion: 'Romanticismo, Tenerezza, Rallentamento' },
+        { title: 'Pasta e Vino – Serata Italiana', description: 'Cucinate spaghetti, aprite una bottiglia di vino rosso – e parlate solo con accento italiano.', emotion: 'Passione, Umorismo, Sensualità' },
+        { title: 'Serata Fondue o Raclette', description: 'Calore, formaggio e vicinanza – perfetto per le serate fredde.', emotion: 'Accoglienza, Piacere, Vicinanza' }
+      ],
+      movie: [
+        { title: 'Serata Film Romantico', description: "Luce di candela, coperta accogliente, film d'amore – tutto ciò di cui avete bisogno siete voi.", emotion: 'Vicinanza, Calore, Tenerezza' },
+        { title: 'Commedia e Relax', description: 'Ridete fino alle lacrime – insieme è il doppio del divertimento.', emotion: 'Gioia, Leggerezza, Connessione' }
+      ],
+      together: [
+        { title: 'Serata Conversazione Profonda', description: 'Lasciate che la conversazione vada più in profondità – con domande che non vi siete mai fatti.', emotion: 'Profondità, Onestà, Fiducia' },
+        { title: 'Ballo in Salotto', description: 'Accendete una candela, mettete musica – e ballate come se foste soli al mondo.', emotion: 'Libertà, Sensualità, Gioia' }
+      ],
+      intimacy: [
+        { title: 'Il Rituale del Bacio Lento', description: "Un solo bacio – ma così lento che i secondi diventano un'eternità.", emotion: 'Intensità, Presenza, Erotismo' },
+        { title: 'Rituale di Massaggio Sensuale', description: 'Un massaggio aromatico – lento, attento e pieno di presenza.', emotion: 'Abbandono, Calma, Vicinanza fisica' }
+      ],
+      world: [
+        { title: '🇮🇹 Italiano – La Dolce Vita', description: 'Pizza, pasta, amore. Magari un tiramisù come dolce finale?', sound: '🎵 Musica di strada italiana', mood: 'Fatelo come a Roma – con tanto sapore e ancora più amore.' },
+        { title: '🍣 Giapponese – Sushi & Zen', description: 'Preparate i vostri roll di sushi o ordinate ramen – con sfida delle bacchette.', sound: '🎵 Flauti delicati, acqua che scorre', mood: 'Equilibrio, precisione, piacere – armonia in ogni morso.' }
+      ]
+    };
+
+    // ===== STATE =====
+    let currentLang = detectBrowserLanguage();
+    let showWorld = false;
+
+    function detectBrowserLanguage() {
+      const browserLang = (navigator.language || 'en').split('-')[0].toLowerCase();
+      return ['en', 'de', 'es', 'fr', 'it'].includes(browserLang) ? browserLang : 'en';
+    }
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    // ===== RENDER FUNCTIONS =====
+    function showLoading() {
+      const i18n = translations[currentLang];
+      document.getElementById('app').innerHTML = `
+        <div class="loading">
+          <div class="spinner">🎰</div>
+          <p>${i18n.loading}</p>
+        </div>
+      `;
+    }
+
+    function render() {
+      const i18n = translations[currentLang];
+      const data = sampleData[currentLang] || sampleData.en;
+      
+      const results = [
+        { category: i18n.categoryFood, emoji: '🍽️', color: '#FF9500', ...getRandomItem(data.food) },
+        { category: i18n.categoryMovie, emoji: '🎬', color: '#9D4EDD', ...getRandomItem(data.movie) },
+        { category: i18n.categoryTogether, emoji: '💞', color: '#FF006E', ...getRandomItem(data.together) },
+        { category: i18n.categoryIntimacy, emoji: '🔥', color: '#DC0073', ...getRandomItem(data.intimacy) }
+      ];
+
+      const worldCuisine = showWorld ? getRandomItem(data.world) : null;
+
+      let html = `
+        <!-- Language Toggle -->
+        <div class="lang-toggle">
+          <label>${i18n.languageLabel}:</label>
+          <select id="lang-select" onchange="setLanguage(this.value)">
+            <option value="en" ${currentLang === 'en' ? 'selected' : ''}>English</option>
+            <option value="de" ${currentLang === 'de' ? 'selected' : ''}>Deutsch</option>
+            <option value="es" ${currentLang === 'es' ? 'selected' : ''}>Español</option>
+            <option value="fr" ${currentLang === 'fr' ? 'selected' : ''}>Français</option>
+            <option value="it" ${currentLang === 'it' ? 'selected' : ''}>Italiano</option>
+          </select>
+        </div>
+        
+        <div class="header">
+          <h1>💕 ${i18n.resultsTitle}</h1>
+          <p>${i18n.resultsSubtitle}</p>
+        </div>
+      `;
+
+      // World Cuisine Section
+      if (worldCuisine) {
+        html += `
+          <div class="world-section">
+            <div class="world-emoji">🌍</div>
+            <h2>${i18n.worldTitle}</h2>
+            <div class="world-title">${worldCuisine.title}</div>
+            <div class="world-description">${worldCuisine.description}</div>
+            ${worldCuisine.sound ? `<div class="world-sound">${worldCuisine.sound}</div>` : ''}
+            ${worldCuisine.mood ? `<div class="world-mood">💬 "${worldCuisine.mood}"</div>` : ''}
+          </div>
+        `;
+      }
+
+      // Results Grid
+      html += '<div class="results-grid">';
+      results.forEach(item => {
+        html += `
+          <div class="result-card" style="border-top: 3px solid ${item.color}">
+            <div class="card-header">
+              <span class="card-emoji">${item.emoji}</span>
+              <span class="card-category" style="color: ${item.color}">${item.category}</span>
+            </div>
+            <div class="card-title">${item.title}</div>
+            <div class="card-description">${item.description}</div>
+            <div class="card-emotion">✨ ${item.emotion}</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+
+      // Buttons
+      html += `
+        <div class="buttons">
+          <button class="btn btn-primary" onclick="spinNew()">${i18n.newSpinButton}</button>
+          <button class="btn btn-secondary" onclick="shareResults()">${i18n.shareButton}</button>
+        </div>
+      `;
+
+      document.getElementById('app').innerHTML = html;
+    }
+
+    // ===== ACTIONS =====
+    function spinNew() {
+      showWorld = false;
+      showLoading();
+      setTimeout(render, 1500);
+    }
+
+    function spinWithWorld() {
+      showWorld = true;
+      showLoading();
+      setTimeout(render, 1500);
+    }
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      render();
+    }
+
+    function changeLanguage() {
+      const langs = ['en', 'de', 'es', 'fr', 'it'];
+      const currentIndex = langs.indexOf(currentLang);
+      currentLang = langs[(currentIndex + 1) % langs.length];
+      render();
+    }
+
+    function shareResults() {
+      alert('📤 Share-Funktion würde in ChatGPT eine Zusammenfassung erstellen!');
+    }
+
+    // ===== INIT =====
+    // Show detected browser language
+    const langNames = {
+      en: 'English 🇬🇧',
+      de: 'Deutsch 🇩🇪',
+      es: 'Español 🇪🇸',
+      fr: 'Français 🇫🇷',
+      it: 'Italiano 🇮🇹'
+    };
+    document.getElementById('browser-lang').textContent = langNames[currentLang] + ' (' + navigator.language + ')';
+    
+    render();
+  </script>
+</body>
+</html>

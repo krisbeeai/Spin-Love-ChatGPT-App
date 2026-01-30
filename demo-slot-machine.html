@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SpinLove Slot Machine - Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      min-height: 100vh;
+      color: white;
+      padding: 20px;
+    }
+    
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    
+    /* ========================================
+       LANGUAGE TOGGLE
+       ======================================== */
+    .lang-toggle {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 100;
+    }
+    
+    .lang-toggle label {
+      color: #9ca3af;
+    }
+    
+    .lang-toggle select {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    
+    /* ========================================
+       HEADER
+       ======================================== */
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      margin-top: 32px;
+    }
+    
+    .header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #FF006E, #9D4EDD, #DC0073);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    
+    .header p {
+      color: #9ca3af;
+      font-size: 16px;
+    }
+    
+    /* ========================================
+       SLOT MACHINE FRAME
+       ======================================== */
+    .slot-machine {
+      background: linear-gradient(145deg, #1a1a2e, #16213e);
+      border: 4px solid #FF006E;
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 
+        0 0 60px rgba(255, 0, 110, 0.3),
+        inset 0 0 30px rgba(0, 0, 0, 0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .slot-machine::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255, 0, 110, 0.1) 0%, transparent 50%);
+      animation: glow-rotate 10s linear infinite;
+      pointer-events: none;
+    }
+    
+    @keyframes glow-rotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    
+    /* ========================================
+       SLOT REELS CONTAINER
+       ======================================== */
+    .reels-container {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    @media (max-width: 700px) {
+      .reels-container {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    /* ========================================
+       SINGLE SLOT REEL
+       ======================================== */
+    .slot-reel {
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      min-height: 300px;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+    
+    .slot-reel.spinning {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .slot-reel.stopped {
+      border-color: var(--reel-color, #FF006E);
+      box-shadow: 0 0 30px var(--reel-color-alpha, rgba(255, 0, 110, 0.4));
+    }
+    
+    /* Category Header */
+    .reel-header {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .reel-header .emoji {
+      font-size: 32px;
+      display: block;
+      margin-bottom: 4px;
+    }
+    
+    .reel-header .category-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--reel-color, #9ca3af);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    /* Reel Window */
+    .reel-window {
+      height: 180px;
+      overflow: hidden;
+      position: relative;
+    }
+    
+    .reel-window::before,
+    .reel-window::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 40px;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .reel-window::before {
+      top: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.9), transparent);
+    }
+    
+    .reel-window::after {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    }
+    
+    /* Spinning Strip */
+    .reel-strip {
+      position: absolute;
+      width: 100%;
+    }
+    
+    .reel-strip.spinning {
+      animation: spin-reel 0.12s linear infinite;
+    }
+    
+    .reel-strip.stopping {
+      animation: none;
+      transition: transform 1.2s cubic-bezier(0.17, 0.67, 0.12, 1.1);
+    }
+    
+    @keyframes spin-reel {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-180px); }
+    }
+    
+    /* Individual Item in Strip */
+    .reel-item {
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Result Display */
+    .reel-result {
+      display: none;
+      padding: 16px;
+      text-align: center;
+      animation: result-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .slot-reel.stopped .reel-window {
+      display: none;
+    }
+    
+    .slot-reel.stopped .reel-result {
+      display: block;
+    }
+    
+    @keyframes result-appear {
+      0% { 
+        opacity: 0; 
+        transform: scale(0.5) translateY(30px); 
+      }
+      60% { 
+        transform: scale(1.1); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: scale(1) translateY(0); 
+      }
+    }
+    
+    .result-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 10px;
+      line-height: 1.3;
+    }
+    
+    .result-description {
+      font-size: 12px;
+      color: #d1d5db;
+      line-height: 1.5;
+      margin-bottom: 12px;
+    }
+    
+    .result-emotion {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--reel-color-alpha, rgba(255, 0, 110, 0.2));
+      color: var(--reel-color, #FF006E);
+      border: 1px solid var(--reel-color, #FF006E);
+    }
+    
+    /* World Badge */
+    .world-badge {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      font-size: 24px;
+      animation: bounce 1s infinite;
+      z-index: 10;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-6px); }
+    }
+    
+    /* ========================================
+       SPIN BUTTON
+       ======================================== */
+    .spin-button-container {
+      text-align: center;
+      margin-top: 24px;
+    }
+    
+    .spin-button {
+      background: linear-gradient(135deg, #FF006E, #DC0073);
+      color: white;
+      border: none;
+      padding: 18px 60px;
+      font-size: 20px;
+      font-weight: 800;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 6px 30px rgba(255, 0, 110, 0.5);
+      text-transform: uppercase;
+      letter-spacing: 3px;
+    }
+    
+    .spin-button:hover:not(:disabled) {
+      transform: scale(1.05) translateY(-2px);
+      box-shadow: 0 10px 40px rgba(255, 0, 110, 0.7);
+    }
+    
+    .spin-button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    
+    .spin-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .spin-button.spinning {
+      animation: pulse-button 0.4s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-button {
+      0%, 100% { box-shadow: 0 6px 30px rgba(255, 0, 110, 0.5); }
+      50% { box-shadow: 0 6px 50px rgba(255, 0, 110, 0.9); }
+    }
+    
+    /* ========================================
+       STATUS TEXT
+       ======================================== */
+    .status-text {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 16px;
+      color: #9ca3af;
+      min-height: 28px;
+      transition: all 0.3s ease;
+    }
+    
+    .status-text.highlight {
+      color: #FF006E;
+      font-weight: 700;
+      font-size: 18px;
+      text-shadow: 0 0 20px rgba(255, 0, 110, 0.5);
+    }
+    
+    /* ========================================
+       WORLD SECTION
+       ======================================== */
+    .world-section {
+      background: linear-gradient(135deg, rgba(255, 149, 0, 0.15), rgba(255, 149, 0, 0.05));
+      border: 2px solid rgba(255, 149, 0, 0.5);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 24px;
+      text-align: center;
+      display: none;
+    }
+    
+    .world-section.visible {
+      display: block;
+      animation: world-appear 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    @keyframes world-appear {
+      0% { 
+        opacity: 0; 
+        transform: translateY(40px) scale(0.8); 
+      }
+      100% { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+      }
+    }
+    
+    .world-section .world-emoji {
+      font-size: 56px;
+      margin-bottom: 12px;
+    }
+    
+    .world-section h2 {
+      font-size: 20px;
+      color: #FF9500;
+      margin-bottom: 12px;
+    }
+    
+    .world-section .world-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    
+    .world-section .world-description {
+      color: #d1d5db;
+      margin-bottom: 12px;
+    }
+    
+    .world-section .world-mood {
+      font-style: italic;
+      color: #FF9500;
+      font-size: 14px;
+    }
+    
+    /* ========================================
+       DEMO INFO
+       ======================================== */
+    .demo-info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #9ca3af;
+    }
+    
+    .demo-info strong {
+      color: #FF006E;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="lang-toggle">
+      <label>Language:</label>
+      <select id="lang-select" onchange="changeLanguage(this.value)">
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+        <option value="es">Español</option>
+        <option value="fr">Français</option>
+        <option value="it">Italiano</option>
+      </select>
+    </div>
+    
+    <div class="header">
+      <h1>💕 SpinLove</h1>
+      <p id="subtitle">Your Date Night Slot Machine</p>
+    </div>
+    
+    <div class="slot-machine">
+      <div class="reels-container" id="reels-container">
+        <!-- Reels will be generated here -->
+      </div>
+      
+      <div class="spin-button-container">
+        <button class="spin-button" id="spin-btn" onclick="startSpin()">
+          🎰 SPIN
+        </button>
+      </div>
+      
+      <div class="status-text" id="status-text">
+        Ready to spin!
+      </div>
+    </div>
+    
+    <div class="world-section" id="world-section">
+      <div class="world-emoji">🌍</div>
+      <h2>🌍 Around the World</h2>
+      <div class="world-title" id="world-title">Japanese Cuisine</div>
+      <div class="world-description" id="world-description">Sushi, sake, and the art of umami</div>
+      <div class="world-mood" id="world-mood">"Simple elegance, refined pleasure"</div>
+    </div>
+  </div>
+    
+  <div class="demo-info">
+    <strong>DEMO MODE</strong> - Animation preview without server
+  </div>
+
+  <script>
+    // ========================================
+    // DEMO DATA (simulated API response)
+    // ========================================
+    
+    const DEMO_DATA = {
+      en: {
+        subtitle: 'Your Date Night Slot Machine',
+        categories: [
+          {
+            id: 'food',
+            name: 'Food & Dining',
+            emoji: '🍽️',
+            color: '#FF9500',
+            items: [
+              { title: 'Candle-Light Dinner', desc: 'Transform your living room into a restaurant just for two.', emotion: 'Romance, Tenderness' },
+              { title: 'Around the World Date', desc: 'Cook a dish from a random country together.', emotion: 'Adventure, Discovery', hasSpecial: true },
+              { title: 'Fondue Night', desc: 'Warmth, cheese, and closeness.', emotion: 'Coziness, Indulgence' },
+              { title: 'Breakfast for Dinner', desc: 'Pancakes, coffee, pajamas – rules abolished!', emotion: 'Spontaneity, Fun' },
+              { title: 'Tapas & Wine', desc: 'Many small bites – shared pleasure.', emotion: 'Variety, Sharing' },
+            ]
+          },
+          {
+            id: 'movie',
+            name: 'Film & Entertainment',
+            emoji: '🎬',
+            color: '#AF52DE',
+            items: [
+              { title: 'Rom-Com Marathon', desc: 'Classic love stories back to back.', emotion: 'Laughter, Romance' },
+              { title: 'Foreign Film Night', desc: 'Discover cinema from another culture.', emotion: 'Culture, Discovery' },
+              { title: 'Childhood Favorites', desc: 'Revisit the movies you loved as kids.', emotion: 'Nostalgia, Joy' },
+              { title: 'Documentary Date', desc: 'Learn something new together.', emotion: 'Curiosity, Growth' },
+              { title: 'Scary Movie Night', desc: 'Hold each other tight during thrills.', emotion: 'Excitement, Closeness' },
+            ]
+          },
+          {
+            id: 'together',
+            name: 'Quality Time',
+            emoji: '💞',
+            color: '#FF2D55',
+            items: [
+              { title: 'Couples Massage', desc: 'Take turns pampering each other.', emotion: 'Relaxation, Care' },
+              { title: 'Memory Lane Walk', desc: 'Visit places meaningful to your relationship.', emotion: 'Nostalgia, Connection' },
+              { title: 'Dance in the Kitchen', desc: 'Put on music and dance like nobody\'s watching.', emotion: 'Joy, Spontaneity' },
+              { title: 'Stargazing Night', desc: 'Blankets, stars, and deep conversations.', emotion: 'Wonder, Intimacy' },
+              { title: 'Puzzle Together', desc: 'Work on a 1000-piece puzzle as a team.', emotion: 'Patience, Teamwork' },
+            ]
+          },
+          {
+            id: 'intimacy',
+            name: 'Romance & Intimacy',
+            emoji: '🔥',
+            color: '#FF006E',
+            items: [
+              { title: 'Love Letter Exchange', desc: 'Write heartfelt letters to each other.', emotion: 'Deep Connection' },
+              { title: 'Sensual Massage', desc: 'Aromatherapy oils and soft music.', emotion: 'Relaxation, Desire' },
+              { title: 'Whispered Fantasies', desc: 'Share your dreams in soft whispers.', emotion: 'Trust, Excitement' },
+              { title: 'Blindfold Surprises', desc: 'Take away sight, heighten other senses.', emotion: 'Anticipation, Trust' },
+              { title: 'Slow Dance Romance', desc: 'Hold each other close, sway to love songs.', emotion: 'Tenderness, Love' },
+            ]
+          }
+        ],
+        worldCuisine: {
+          title: '🇯🇵 Japanese',
+          description: 'Sushi, sake, and the art of umami – minimalist elegance on every plate.',
+          mood: 'Zen serenity meets culinary perfection'
+        },
+        status: {
+          ready: 'Ready to spin!',
+          spinning: '🎰 Spinning all reels...',
+          stopping: '✨ Stopping',
+          complete: '💕 Your perfect evening awaits!'
+        }
+      },
+      de: {
+        subtitle: 'Eure Date-Night Slot Machine',
+        categories: [
+          {
+            id: 'food',
+            name: 'Essen & Genuss',
+            emoji: '🍽️',
+            color: '#FF9500',
+            items: [
+              { title: 'Candle-Light Dinner', desc: 'Verwandelt euer Wohnzimmer in ein Restaurant nur für zwei.', emotion: 'Romantik, Zärtlichkeit' },
+              { title: 'Around the World Date', desc: 'Kocht gemeinsam ein Gericht aus einem zufälligen Land.', emotion: 'Abenteuer, Entdeckung', hasSpecial: true },
+              { title: 'Fondue Abend', desc: 'Wärme, Käse und Nähe.', emotion: 'Gemütlichkeit, Genuss' },
+              { title: 'Breakfast for Dinner', desc: 'Pancakes, Kaffee, Pyjama – Regeln abgeschafft!', emotion: 'Spontanität, Spaß' },
+              { title: 'Tapas & Wein', desc: 'Viele kleine Häppchen – geteilter Genuss.', emotion: 'Vielfalt, Teilen' },
+            ]
+          },
+          {
+            id: 'movie',
+            name: 'Film & Entertainment',
+            emoji: '🎬',
+            color: '#AF52DE',
+            items: [
+              { title: 'Rom-Com Marathon', desc: 'Klassische Liebesgeschichten am Stück.', emotion: 'Lachen, Romantik' },
+              { title: 'Fremdsprachiger Film', desc: 'Entdeckt Kino aus einer anderen Kultur.', emotion: 'Kultur, Entdeckung' },
+              { title: 'Kindheits-Favoriten', desc: 'Schaut die Filme eurer Kindheit.', emotion: 'Nostalgie, Freude' },
+              { title: 'Dokumentar-Date', desc: 'Lernt gemeinsam etwas Neues.', emotion: 'Neugier, Wachstum' },
+              { title: 'Gruselfilm-Nacht', desc: 'Haltet euch fest bei den Thrills.', emotion: 'Aufregung, Nähe' },
+            ]
+          },
+          {
+            id: 'together',
+            name: 'Zeit zu Zweit',
+            emoji: '💞',
+            color: '#FF2D55',
+            items: [
+              { title: 'Partner-Massage', desc: 'Verwöhnt euch gegenseitig.', emotion: 'Entspannung, Fürsorge' },
+              { title: 'Erinnerungs-Spaziergang', desc: 'Besucht Orte, die euch wichtig sind.', emotion: 'Nostalgie, Verbindung' },
+              { title: 'Küchentanz', desc: 'Musik an und tanzen wie verrückt.', emotion: 'Freude, Spontanität' },
+              { title: 'Sterne-Beobachtung', desc: 'Decken, Sterne und tiefe Gespräche.', emotion: 'Staunen, Intimität' },
+              { title: 'Puzzle zu Zweit', desc: '1000 Teile als Team zusammen.', emotion: 'Geduld, Teamwork' },
+            ]
+          },
+          {
+            id: 'intimacy',
+            name: 'Erotik & Intimität',
+            emoji: '🔥',
+            color: '#FF006E',
+            items: [
+              { title: 'Liebesbrief-Austausch', desc: 'Schreibt euch herzliche Briefe.', emotion: 'Tiefe Verbindung' },
+              { title: 'Sinnliche Massage', desc: 'Aromaöle und sanfte Musik.', emotion: 'Entspannung, Verlangen' },
+              { title: 'Geflüsterte Fantasien', desc: 'Teilt eure Träume im Flüsterton.', emotion: 'Vertrauen, Aufregung' },
+              { title: 'Augenbinden-Spiel', desc: 'Ohne Sicht, alle anderen Sinne verstärkt.', emotion: 'Spannung, Vertrauen' },
+              { title: 'Langsamer Tanz', desc: 'Haltet euch nah, wiegt euch zu Liebesliedern.', emotion: 'Zärtlichkeit, Liebe' },
+            ]
+          }
+        ],
+        worldCuisine: {
+          title: '🇯🇵 Japanisch',
+          description: 'Sushi, Sake und die Kunst des Umami – minimalistische Eleganz auf jedem Teller.',
+          mood: 'Zen-Gelassenheit trifft kulinarische Perfektion'
+        },
+        status: {
+          ready: 'Bereit zum Drehen!',
+          spinning: '🎰 Alle Walzen drehen sich...',
+          stopping: '✨ Stoppe',
+          complete: '💕 Euer perfekter Abend wartet!'
+        }
+      }
+    };
+    
+    // ========================================
+    // STATE
+    // ========================================
+    
+    let currentLang = 'en';
+    let isSpinning = false;
+    let currentResults = [];
+    let hasWorldCuisine = false;
+    
+    const SPIN_DURATION = 2000;
+    const STOP_INTERVAL = 1200;
+    
+    const REEL_COLORS = {
+      food: { color: '#FF9500', alpha: 'rgba(255, 149, 0, 0.3)' },
+      movie: { color: '#AF52DE', alpha: 'rgba(175, 82, 222, 0.3)' },
+      together: { color: '#FF2D55', alpha: 'rgba(255, 45, 85, 0.3)' },
+      intimacy: { color: '#FF006E', alpha: 'rgba(255, 0, 110, 0.3)' }
+    };
+    
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    
+    function init() {
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      document.getElementById('subtitle').textContent = data.subtitle;
+      renderReels(data.categories);
+      updateStatus('ready');
+    }
+    
+    function renderReels(categories) {
+      const container = document.getElementById('reels-container');
+      container.innerHTML = '';
+      
+      categories.forEach((cat, index) => {
+        const colors = REEL_COLORS[cat.id];
+        const spinItems = cat.items.map(i => i.title);
+        
+        const reel = document.createElement('div');
+        reel.className = 'slot-reel';
+        reel.id = `reel-${index}`;
+        reel.style.setProperty('--reel-color', colors.color);
+        reel.style.setProperty('--reel-color-alpha', colors.alpha);
+        
+        reel.innerHTML = `
+          <div class="reel-header">
+            <span class="emoji">${cat.emoji}</span>
+            <span class="category-name">${cat.name}</span>
+          </div>
+          
+          <div class="reel-window">
+            <div class="reel-strip" id="strip-${index}">
+              ${spinItems.map(t => `<div class="reel-item">${t}</div>`).join('')}
+              ${spinItems.map(t => `<div class="reel-item">${t}</div>`).join('')}
+              ${spinItems.map(t => `<div class="reel-item">${t}</div>`).join('')}
+            </div>
+          </div>
+          
+          <div class="reel-result" id="result-${index}">
+            <div class="result-title"></div>
+            <div class="result-description"></div>
+            <div class="result-emotion"></div>
+          </div>
+        `;
+        
+        container.appendChild(reel);
+      });
+    }
+    
+    // ========================================
+    // SPIN LOGIC
+    // ========================================
+    
+    async function startSpin() {
+      if (isSpinning) return;
+      isSpinning = true;
+      
+      // Hide previous results
+      document.getElementById('world-section').classList.remove('visible');
+      
+      // Reset reels
+      document.querySelectorAll('.slot-reel').forEach(reel => {
+        reel.classList.remove('stopped');
+      });
+      
+      // Generate random results
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      currentResults = data.categories.map(cat => {
+        const item = cat.items[Math.floor(Math.random() * cat.items.length)];
+        return { category: cat, item };
+      });
+      
+      // Check if we got "Around the World"
+      hasWorldCuisine = currentResults.some(r => r.item.hasSpecial);
+      
+      // Start animation
+      startSpinAnimation();
+      
+      // Wait then stop sequentially
+      await new Promise(r => setTimeout(r, SPIN_DURATION));
+      
+      for (let i = 0; i < currentResults.length; i++) {
+        await stopReel(i);
+        await new Promise(r => setTimeout(r, STOP_INTERVAL));
+      }
+      
+      // Show completion
+      updateStatus('complete');
+      
+      if (hasWorldCuisine) {
+        const world = data.worldCuisine;
+        document.getElementById('world-title').textContent = world.title;
+        document.getElementById('world-description').textContent = world.description;
+        document.getElementById('world-mood').textContent = `"${world.mood}"`;
+        document.getElementById('world-section').classList.add('visible');
+      }
+      
+      resetSpinButton();
+      isSpinning = false;
+    }
+    
+    function startSpinAnimation() {
+      document.querySelectorAll('.reel-strip').forEach(strip => {
+        strip.classList.remove('stopping');
+        strip.classList.add('spinning');
+        strip.style.transform = '';
+      });
+      
+      const btn = document.getElementById('spin-btn');
+      btn.disabled = true;
+      btn.classList.add('spinning');
+      btn.textContent = '🎰 SPINNING...';
+      
+      updateStatus('spinning');
+    }
+    
+    async function stopReel(index) {
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      const strip = document.getElementById(`strip-${index}`);
+      const reel = document.getElementById(`reel-${index}`);
+      const result = currentResults[index];
+      
+      updateStatus('stopping', result.category.name);
+      
+      // Stop animation
+      strip.classList.remove('spinning');
+      strip.classList.add('stopping');
+      strip.style.transform = `translateY(-${60 + Math.random() * 120}px)`;
+      
+      await new Promise(r => setTimeout(r, 800));
+      
+      // Show result
+      const resultEl = document.getElementById(`result-${index}`);
+      resultEl.querySelector('.result-title').textContent = result.item.title;
+      resultEl.querySelector('.result-description').textContent = result.item.desc;
+      resultEl.querySelector('.result-emotion').textContent = `💞 ${result.item.emotion}`;
+      
+      if (result.item.hasSpecial) {
+        const badge = document.createElement('div');
+        badge.className = 'world-badge';
+        badge.textContent = '🌍';
+        reel.appendChild(badge);
+      }
+      
+      reel.classList.add('stopped');
+    }
+    
+    function updateStatus(state, categoryName = '') {
+      const el = document.getElementById('status-text');
+      const data = DEMO_DATA[currentLang] || DEMO_DATA.en;
+      
+      el.classList.remove('highlight');
+      
+      switch (state) {
+        case 'spinning':
+          el.textContent = data.status.spinning;
+          break;
+        case 'stopping':
+          el.textContent = `${data.status.stopping} ${categoryName}...`;
+          el.classList.add('highlight');
+          break;
+        case 'complete':
+          el.textContent = data.status.complete;
+          el.classList.add('highlight');
+          break;
+        default:
+          el.textContent = data.status.ready;
+      }
+    }
+    
+    function resetSpinButton() {
+      const btn = document.getElementById('spin-btn');
+      btn.disabled = false;
+      btn.classList.remove('spinning');
+      btn.textContent = '🎰 SPIN';
+    }
+    
+    function changeLanguage(lang) {
+      currentLang = lang;
+      init();
+    }
+    
+    // Start
+    init();
+  </script>
+</body>
+</html>
