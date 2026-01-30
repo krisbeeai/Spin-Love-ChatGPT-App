@@ -417,28 +417,53 @@ app.get('/health', (req: Request, res: Response) => {
 // MCP TRANSPORT
 // ============================================
 
+// Store transports by session ID for reuse
+const transports = new Map<string, StreamableHTTPServerTransport>();
+
 app.all('/mcp', async (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string || randomUUID();
   
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => sessionId,
-    onsessioninitialized: (id: string) => {
-      console.log(`MCP Session initialized: ${id}`);
-    }
-  });
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
+  // Check if client accepts SSE or JSON
+  const acceptHeader = req.headers.accept || '';
+  const wantsSSE = acceptHeader.includes('text/event-stream');
+  
+  let transport = transports.get(sessionId);
+  
+  if (!transport) {
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => sessionId,
+      enableJsonResponse: true,  // Enable JSON response for ChatGPT compatibility
+      onsessioninitialized: (id: string) => {
+        console.log(`MCP Session initialized: ${id}`);
+      }
+    });
+    
+    transports.set(sessionId, transport);
+    
+    // Connect MCP server to transport
+    await mcpServer.connect(transport);
+  }
+  
+  // Set appropriate headers based on client preference
+  if (wantsSSE) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+  }
   res.setHeader('mcp-session-id', sessionId);
 
   await transport.handleRequest(req, res, req.body);
   
   res.on('close', () => {
-    transport.close();
+    // Clean up after some time to allow reconnection
+    setTimeout(() => {
+      const t = transports.get(sessionId);
+      if (t) {
+        t.close();
+        transports.delete(sessionId);
+      }
+    }, 60000); // Keep session for 60 seconds after disconnect
   });
-
-  await mcpServer.connect(transport);
 });
 
 // ============================================
