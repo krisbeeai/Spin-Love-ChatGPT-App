@@ -73,6 +73,8 @@ mcpServer.tool(
     sessionId: z.string().optional().describe("Session ID for tracking free spins"),
     userId: z.string().optional().describe("User ID for logged-in users")
   },
+  // Annotations: readOnly (no data changes), not destructive, no external effects
+  { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   async (args) => {
     const lang = (args.language || 'en') as Language;
     
@@ -170,6 +172,8 @@ mcpServer.tool(
     country: z.string().optional().describe("Country code (DE, US, etc.)"),
     consent: z.boolean().describe("User has accepted privacy policy and marketing consent")
   },
+  // Annotations: creates data, not destructive, sends email (external effect)
+  { readOnlyHint: false, destructiveHint: false, openWorldHint: true },
   async (args) => {
     const lang = (args.language || 'en') as Language;
     
@@ -274,6 +278,8 @@ mcpServer.tool(
     userId: z.string().describe("User ID"),
     limit: z.number().optional().describe("Number of results to return (default: 10)")
   },
+  // Annotations: only reads history, not destructive, no external effects
+  { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   async (args) => {
     const user = await getUserById(args.userId);
     if (!user || user.status !== 'active') {
@@ -310,6 +316,8 @@ mcpServer.tool(
   {
     language: z.string().optional().describe("Language code (en, de, es, fr, it)")
   },
+  // Annotations: only reads categories, not destructive, no external effects
+  { readOnlyHint: true, destructiveHint: false, openWorldHint: false },
   async (args) => {
     const lang = (args.language || 'en') as Language;
     const categoryList = categories.map(cat => ({
@@ -409,33 +417,118 @@ app.get('/health', (req: Request, res: Response) => {
 // MCP TRANSPORT
 // ============================================
 
+// Store transports by session ID for reuse
+const transports = new Map<string, StreamableHTTPServerTransport>();
+
 app.all('/mcp', async (req: Request, res: Response) => {
   const sessionId = req.headers['mcp-session-id'] as string || randomUUID();
   
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: () => sessionId,
-    onsessioninitialized: (id: string) => {
-      console.log(`MCP Session initialized: ${id}`);
-    }
-  });
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
+  // Check if client accepts SSE or JSON
+  const acceptHeader = req.headers.accept || '';
+  const wantsSSE = acceptHeader.includes('text/event-stream');
+  
+  let transport = transports.get(sessionId);
+  
+  if (!transport) {
+    transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: () => sessionId,
+      enableJsonResponse: true,  // Enable JSON response for ChatGPT compatibility
+      onsessioninitialized: (id: string) => {
+        console.log(`MCP Session initialized: ${id}`);
+      }
+    });
+    
+    transports.set(sessionId, transport);
+    
+    // Connect MCP server to transport
+    await mcpServer.connect(transport);
+  }
+  
+  // Set appropriate headers based on client preference
+  if (wantsSSE) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+  }
   res.setHeader('mcp-session-id', sessionId);
 
   await transport.handleRequest(req, res, req.body);
   
   res.on('close', () => {
-    transport.close();
+    // Clean up after some time to allow reconnection
+    setTimeout(() => {
+      const t = transports.get(sessionId);
+      if (t) {
+        t.close();
+        transports.delete(sessionId);
+      }
+    }, 60000); // Keep session for 60 seconds after disconnect
   });
-
-  await mcpServer.connect(transport);
 });
 
 // ============================================
 // START SERVER
 // ============================================
+
+// ============================================
+// REST API ENDPOINTS (for ChatGPT Actions)
+// ============================================
+
+// POST /api/spin - Spin the slot machine
+app.post('/api/spin', async (req: Request, res: Response) => {
+  const lang = (req.body?.language || 'en') as Language;
+  const t = getTranslations(lang);
+  
+  const foodItems = getCategoryItems('food', lang);
+  const movieItems = getCategoryItems('movie', lang);
+  const togetherItems = getCategoryItems('together', lang);
+  const intimacyItems = getCategoryItems('intimacy', lang);
+  
+  const results = [
+    {
+      category: { id: 'food', name: t.categories.food, emoji: '🍽️' },
+      item: getSmartRandom(foodItems, `food-${lang}`)
+    },
+    {
+      category: { id: 'movie', name: t.categories.movie, emoji: '🎬' },
+      item: getSmartRandom(movieItems, `movie-${lang}`)
+    },
+    {
+      category: { id: 'together', name: t.categories.together, emoji: '✨' },
+      item: getSmartRandom(togetherItems, `together-${lang}`)
+    },
+    {
+      category: { id: 'intimacy', name: t.categories.intimacy, emoji: '💕' },
+      item: getSmartRandom(intimacyItems, `intimacy-${lang}`)
+    }
+  ];
+  
+  const worldCuisine = Math.random() > 0.5 ? getWorldCuisine(lang) : null;
+  
+  res.json({
+    success: true,
+    results,
+    worldCuisine
+  });
+});
+
+// GET /api/categories - List all categories
+app.get('/api/categories', async (req: Request, res: Response) => {
+  const lang = (req.query.language as Language) || 'en';
+  const t = getTranslations(lang);
+  
+  const categoryList = [
+    { id: 'food', name: t.categories.food, emoji: '🍽️', itemCount: getCategoryItems('food', lang).length },
+    { id: 'movie', name: t.categories.movie, emoji: '🎬', itemCount: getCategoryItems('movie', lang).length },
+    { id: 'together', name: t.categories.together, emoji: '✨', itemCount: getCategoryItems('together', lang).length },
+    { id: 'intimacy', name: t.categories.intimacy, emoji: '💕', itemCount: getCategoryItems('intimacy', lang).length }
+  ];
+  
+  res.json({
+    success: true,
+    categories: categoryList
+  });
+});
 
 const PORT = process.env.PORT || 8000;
 
